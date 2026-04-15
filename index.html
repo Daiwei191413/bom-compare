@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>电子物料BOM查错对比工具</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.innerHTML = '<div style="text-align:center;padding:100px;font-size:18px;color:red;">⚠️ 核心库加载失败，请检查网络后刷新页面</div>';
+      });
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; }
@@ -95,14 +103,14 @@
   <div class="main">
     <!-- 上传区 -->
     <div class="upload-section">
-      <div class="upload-box" id="uploadA" onclick="document.getElementById('fileA').click()">
+      <div class="upload-box" id="uploadA">
         <div class="upload-icon">📄</div>
         <div class="upload-title">BOM A（基准版本）</div>
         <div class="upload-hint">点击上传 Excel 文件</div>
         <div class="upload-info" id="infoA"></div>
         <input type="file" id="fileA" accept=".xlsx,.xls,.csv">
       </div>
-      <div class="upload-box" id="uploadB" onclick="document.getElementById('fileB').click()">
+      <div class="upload-box" id="uploadB">
         <div class="upload-icon">📄</div>
         <div class="upload-title">BOM B（对比版本）</div>
         <div class="upload-hint">点击上传 Excel 文件</div>
@@ -168,8 +176,16 @@
     let currentFilter = 'all';
 
     // ========== 文件上传 ==========
-    document.getElementById('fileA').addEventListener('change', e => handleFile(e, 'A'));
-    document.getElementById('fileB').addEventListener('change', e => handleFile(e, 'B'));
+    document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); });
+    document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
+
+    // 点击上传区域触发文件选择
+    document.getElementById('uploadA').addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT') document.getElementById('fileA').click();
+    });
+    document.getElementById('uploadB').addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT') document.getElementById('fileB').click();
+    });
 
     function handleFile(e, side) {
       const file = e.target.files[0];
