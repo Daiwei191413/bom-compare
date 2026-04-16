@@ -170,15 +170,15 @@
     let currentDiffFilter = 'all';
 
     const FIELD_ALIASES = {
-      '型号': ['型号', 'Comment型号', 'Comment', 'Value', 'value', '规格型号'],
-      '位号': ['位号', 'Designator位号', 'Designator', 'Reference', 'reference', '位置编号'],
-      '封装': ['封装', 'Footprint封装', 'Footprint', 'Package', 'package', '封装规格'],
-      '数量': ['数量', 'Quantity', 'quantity', 'QTY', 'qty', '用量'],
-      '物料编码': ['物料编码', 'PartNumber', 'MPN', '料号'],
-      '物料名称': ['物料名称', 'Description', 'description', '描述', '名称'],
-      '参数描述': ['参数描述', '规格描述', '详细描述'],
+      '型号': ['型号', 'Comment型号', 'Comment', 'Value', 'value', '规格型号', 'LibRef', 'Part', 'PartNumber'],
+      '位号': ['位号', 'Designator位号', 'Designator', 'Reference', 'reference', '位置编号', 'Ref', 'RefDes'],
+      '封装': ['封装', 'Footprint封号', 'Footprint', 'Package', 'package', '封装规格', 'PCB Footprint'],
+      '数量': ['数量', 'Quantity', 'quantity', 'QTY', 'qty', '用量', 'Count'],
+      '物料编码': ['物料编码', 'MPN', '料号', 'Part Number'],
+      '物料名称': ['物料名称', 'Description', 'description', '描述', '名称', 'Desc'],
+      '参数描述': ['参数描述', '规格描述', '详细描述', 'Specification'],
       '单位': ['单位', 'Unit'],
-      '品牌': ['品牌', 'Brand', 'Manufacturer', '厂商'],
+      '品牌': ['品牌', 'Brand', 'Manufacturer', '厂商', 'MFR'],
       '备注': ['备注', 'Note', 'Remark', '说明']
     };
 
@@ -269,12 +269,24 @@
       }
 
       var headers = raw[headerIdx].map(function(h) { return String(h || '').trim(); });
+      // 字段映射：先精确匹配，再模糊匹配
       var fieldMap = {};
+      var usedHeaders = new Set();
+      // 第一轮：精确匹配
       for (var std in FIELD_ALIASES) {
         var aliases = FIELD_ALIASES[std];
         for (var a = 0; a < aliases.length; a++) {
-          var found = headers.find(function(h) { return h.includes(aliases[a]); });
-          if (found) { fieldMap[std] = found; break; }
+          var found = headers.find(function(h) { return !usedHeaders.has(h) && h === aliases[a]; });
+          if (found) { fieldMap[std] = found; usedHeaders.add(found); break; }
+        }
+      }
+      // 第二轮：包含匹配（未匹配的字段）
+      for (var std in FIELD_ALIASES) {
+        if (fieldMap[std]) continue;
+        var aliases = FIELD_ALIASES[std];
+        for (var a = 0; a < aliases.length; a++) {
+          var found = headers.find(function(h) { return !usedHeaders.has(h) && h.includes(aliases[a]); });
+          if (found) { fieldMap[std] = found; usedHeaders.add(found); break; }
         }
       }
       var rows = [];
