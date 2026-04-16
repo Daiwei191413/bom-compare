@@ -182,18 +182,22 @@
       '备注': ['备注', 'Note', 'Remark', '说明']
     };
 
-    document.getElementById('uploadA').addEventListener('click', function() {
-      document.getElementById('fileA').value = '';
-      document.getElementById('fileA').click();
-    });
-    document.getElementById('uploadB').addEventListener('click', function() {
-      document.getElementById('fileB').value = '';
-      document.getElementById('fileB').click();
-    });
-    document.getElementById('fileA').addEventListener('click', function(e) { e.stopPropagation(); });
-    document.getElementById('fileB').addEventListener('click', function(e) { e.stopPropagation(); });
-    document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); });
-    document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
+    // 上传逻辑：用最简单的方式，避免事件冲突
+    function triggerUpload(side) {
+      var input = document.getElementById('file' + side);
+      // 创建新的input替换旧的，彻底解决无法重复选择的问题
+      var newInput = document.createElement('input');
+      newInput.type = 'file';
+      newInput.id = 'file' + side;
+      newInput.accept = '.xlsx,.xls,.csv';
+      newInput.style.display = 'none';
+      newInput.addEventListener('change', function(e) { handleFile(e, side); });
+      input.parentNode.replaceChild(newInput, input);
+      newInput.click();
+    }
+
+    document.getElementById('uploadA').addEventListener('click', function(e) { e.preventDefault(); triggerUpload('A'); });
+    document.getElementById('uploadB').addEventListener('click', function(e) { e.preventDefault(); triggerUpload('B'); });
 
     function handleFile(e, side) {
       var file = e.target.files[0];
