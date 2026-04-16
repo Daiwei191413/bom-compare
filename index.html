@@ -235,9 +235,16 @@
       var sheetName = wb.SheetNames.find(function(n) { return n.includes('BOM') || n.includes('bom'); }) || wb.SheetNames[0];
       var ws = wb.Sheets[sheetName];
       var raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      // 过滤掉完全空的行
+      var nonEmptyRows = [];
+      raw.forEach(function(r, i) { if (r && r.length > 0 && r.some(function(c) { return c !== null && c !== undefined && String(c).trim() !== ''; })) nonEmptyRows.push(i); });
+
       var headerIdx = -1;
-      for (var i = 0; i < Math.min(raw.length, 20); i++) {
-        var row = (raw[i] || []).map(function(c) { return String(c || ''); });
+      // 方法1：找包含已知字段名的行
+      for (var i = 0; i < Math.min(raw.length, 30); i++) {
+        if (!raw[i] || raw[i].length === 0) continue;
+        var row = raw[i].map(function(c) { return String(c || ''); });
         var matchCount = 0;
         for (var std in FIELD_ALIASES) {
           var aliases = FIELD_ALIASES[std];
@@ -247,7 +254,16 @@
         }
         if (matchCount >= 2) { headerIdx = i; break; }
       }
-      if (headerIdx === -1) headerIdx = 0;
+      // 方法2：如果没找到，用第一个非空行作为表头
+      if (headerIdx === -1) {
+        headerIdx = nonEmptyRows.length > 0 ? nonEmptyRows[0] : 0;
+      }
+
+      // 防御：确保 headerIdx 有效
+      if (!raw[headerIdx] || raw[headerIdx].length === 0) {
+        return { headers: [], rows: [], sheetName: sheetName, fieldMap: {} };
+      }
+
       var headers = raw[headerIdx].map(function(h) { return String(h || '').trim(); });
       var fieldMap = {};
       for (var std in FIELD_ALIASES) {
