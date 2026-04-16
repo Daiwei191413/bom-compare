@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>电子物料BOM查错对比工具 v2.1</title>
+  <title>电子物料BOM查错对比工具 v2.2</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -104,20 +104,24 @@
   <div class="main">
     <div class="upload-section">
       <div class="upload-box" id="uploadA">
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">BOM A（基准版本）</div>
-        <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
-        <div class="upload-info" id="infoA"></div>
-        <div class="field-map" id="fieldsA" style="display:none"></div>
-        <input type="file" id="fileA" accept=".xlsx,.xls,.csv">
+        <label for="fileA" style="cursor:pointer;display:block;">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">BOM A（基准版本）</div>
+          <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
+          <div class="upload-info" id="infoA"></div>
+          <div class="field-map" id="fieldsA" style="display:none"></div>
+        </label>
+        <input type="file" id="fileA" accept=".xlsx,.xls,.csv" style="display:none">
       </div>
       <div class="upload-box" id="uploadB">
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">BOM B（对比版本）</div>
-        <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
-        <div class="upload-info" id="infoB"></div>
-        <div class="field-map" id="fieldsB" style="display:none"></div>
-        <input type="file" id="fileB" accept=".xlsx,.xls,.csv">
+        <label for="fileB" style="cursor:pointer;display:block;">
+          <div class="upload-icon">📄</div>
+          <div class="upload-title">BOM B（对比版本）</div>
+          <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
+          <div class="upload-info" id="infoB"></div>
+          <div class="field-map" id="fieldsB" style="display:none"></div>
+        </label>
+        <input type="file" id="fileB" accept=".xlsx,.xls,.csv" style="display:none">
       </div>
     </div>
     <div class="config-section">
@@ -185,22 +189,11 @@
       '备注': ['备注', 'Note', 'Remark', '说明']
     };
 
-    // 上传逻辑：用最简单的方式，避免事件冲突
-    function triggerUpload(side) {
-      var input = document.getElementById('file' + side);
-      // 创建新的input替换旧的，彻底解决无法重复选择的问题
-      var newInput = document.createElement('input');
-      newInput.type = 'file';
-      newInput.id = 'file' + side;
-      newInput.accept = '.xlsx,.xls,.csv';
-      newInput.style.display = 'none';
-      newInput.addEventListener('change', function(e) { handleFile(e, side); });
-      input.parentNode.replaceChild(newInput, input);
-      newInput.click();
-    }
-
-    document.getElementById('uploadA').addEventListener('click', function(e) { e.preventDefault(); triggerUpload('A'); });
-    document.getElementById('uploadB').addEventListener('click', function(e) { e.preventDefault(); triggerUpload('B'); });
+    // 上传逻辑：用label原生触发，JS只处理change事件
+    document.getElementById('fileA').addEventListener('click', function() { this.value = ''; });
+    document.getElementById('fileB').addEventListener('click', function() { this.value = ''; });
+    document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); });
+    document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
 
     function handleFile(e, side) {
       var file = e.target.files[0];
