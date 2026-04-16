@@ -1,558 +1,336 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>电子物料BOM查错对比工具 v2.3</title>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; }
-    header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; padding: 25px 0; text-align: center; }
-    header h1 { font-size: 28px; margin-bottom: 8px; }
-    header p { font-size: 14px; opacity: 0.85; }
-    .main { max-width: 1400px; margin: 0 auto; padding: 25px; }
-    .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-    .upload-box { background: white; border: 2px dashed #ccc; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
-    .upload-box:hover { border-color: #1a73e8; background: #f8faff; }
-    .upload-box.loaded { border-color: #34a853; border-style: solid; background: #f0fff4; }
-    .upload-icon { font-size: 48px; margin-bottom: 12px; }
-    .upload-title { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 6px; }
-    .upload-hint { font-size: 13px; color: #888; }
-    .upload-info { font-size: 13px; color: #34a853; font-weight: bold; margin-top: 10px; }
-    .upload-box input { display: none; }
-    .field-map { font-size: 12px; color: #666; margin-top: 8px; text-align: left; padding: 8px; background: #f8f9fa; border-radius: 6px; }
-    .field-map div { margin: 2px 0; }
-    .config-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .config-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; }
-    .config-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
-    .config-item { display: flex; align-items: center; gap: 8px; }
-    .config-item label { font-size: 13px; color: #555; white-space: nowrap; }
-    .config-item select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
-    .compare-fields { margin-top: 15px; }
-    .compare-fields label { font-size: 13px; margin-right: 15px; }
-    .action-bar { text-align: center; margin-bottom: 25px; }
-    .btn { padding: 14px 40px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; display: inline-block; }
-    .btn-primary { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(26,115,232,0.4); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-export { background: #34a853; color: white; margin-left: 15px; }
-    .btn-export:hover { background: #2d9249; }
-    .btn-format { background: linear-gradient(135deg, #7c4dff, #651fff); color: white; margin-left: 15px; padding: 10px 20px; font-size: 14px; }
-    .btn-format:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124,77,255,0.4); }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
-    .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .stat-number { font-size: 36px; font-weight: bold; }
-    .stat-label { font-size: 13px; color: #666; margin-top: 5px; }
-    .stat-card.added .stat-number { color: #34a853; }
-    .stat-card.removed .stat-number { color: #ea4335; }
-    .stat-card.modified .stat-number { color: #fbbc04; }
-    .stat-card.same .stat-number { color: #1a73e8; }
-    .result-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; margin-bottom: 25px; }
-    .result-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .filter-btn { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: white; transition: all 0.2s; }
-    .filter-btn:hover { border-color: #1a73e8; }
-    .filter-btn.active { background: #1a73e8; color: white; border-color: #1a73e8; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #f8f9fa; padding: 10px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; font-weight: bold; color: #333; white-space: nowrap; }
-    td { padding: 8px; border-bottom: 1px solid #f0f0f0; max-width: 300px; word-break: break-all; }
-    tr:hover { background: #f8faff; }
-    tr.row-added { background: #e6f4ea; }
-    tr.row-removed { background: #fce8e6; }
-    tr.row-modified { background: #fef7e0; }
-    td.cell-changed { background: #fff3cd; font-weight: bold; }
-    .diff-old { text-decoration: line-through; color: #ea4335; font-size: 12px; display: block; }
-    .diff-new { color: #34a853; font-weight: bold; display: block; }
-    .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; color: white; }
-    .badge-added { background: #34a853; }
-    .badge-removed { background: #ea4335; }
-    .badge-modified { background: #fbbc04; color: #333; }
-    .badge-same { background: #e0e0e0; color: #666; }
-    #resultSection { display: none; }
-    #resultSection.show { display: block; }
-    /* 差异明细面板 */
-    .diff-detail-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 25px; }
-    .diff-filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .diff-item { padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; border-left: 4px solid; }
-    .diff-item.diff-field-change { background: #fef7e0; border-left-color: #fbbc04; }
-    .diff-item.diff-a-only { background: #fce8e6; border-left-color: #ea4335; }
-    .diff-item.diff-b-only { background: #e6f4ea; border-left-color: #34a853; }
-    .diff-item .diff-key { font-weight: bold; color: #333; }
-    .diff-item .diff-type { font-size: 12px; padding: 1px 6px; border-radius: 4px; color: white; margin-left: 8px; }
-    .diff-type-change { background: #fbbc04; color: #333 !important; }
-    .diff-type-a-only { background: #ea4335; }
-    .diff-type-b-only { background: #34a853; }
-    .diff-item .diff-detail { color: #555; margin-top: 4px; }
-    .diff-item .val-a { color: #ea4335; font-weight: bold; }
-    .diff-item .val-b { color: #34a853; font-weight: bold; }
-    @media (max-width: 768px) {
-      .upload-section { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOM对比工具 v3.0</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh}
+header{background:linear-gradient(135deg,#1a73e8,#0d47a1);color:#fff;padding:25px 0;text-align:center}
+header h1{font-size:26px;margin-bottom:6px}
+header p{font-size:13px;opacity:.85}
+.main{max-width:1400px;margin:0 auto;padding:20px}
+
+/* 上传区 */
+.upload-row{display:flex;gap:20px;margin-bottom:20px}
+.upload-card{flex:1;background:#fff;border:2px dashed #ccc;border-radius:12px;padding:30px;text-align:center;position:relative;transition:.3s}
+.upload-card:hover{border-color:#1a73e8;background:#f8faff}
+.upload-card.ok{border-color:#34a853;border-style:solid;background:#f0fff4}
+.upload-card h3{font-size:16px;margin-bottom:8px}
+.upload-card p{font-size:12px;color:#888}
+.upload-card .info{font-size:13px;color:#34a853;font-weight:bold;margin-top:8px}
+.upload-card .fmap{font-size:11px;color:#666;margin-top:6px;text-align:left;background:#f8f9fa;padding:6px 10px;border-radius:6px;display:none}
+.file-btn{display:inline-block;margin-top:12px;padding:8px 24px;background:#1a73e8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.file-btn:hover{background:#1557b0}
+
+/* 配置 */
+.cfg{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.cfg h3{font-size:15px;margin-bottom:10px}
+.cfg-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.cfg-row label{font-size:13px;color:#555}
+.cfg-row select{padding:5px 8px;border:1px solid #ddd;border-radius:6px;font-size:13px}
+.cmp-checks{margin-top:10px}
+.cmp-checks label{font-size:13px;margin-right:14px}
+
+/* 按钮 */
+.bar{text-align:center;margin-bottom:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{padding:12px 30px;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;transition:.3s}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-blue{background:#1a73e8;color:#fff}
+.btn-blue:hover:not(:disabled){background:#1557b0}
+.btn-green{background:#34a853;color:#fff}
+.btn-purple{background:#7c4dff;color:#fff}
+
+/* 统计 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sc{background:#fff;padding:16px;border-radius:12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.sc .n{font-size:34px;font-weight:bold}
+.sc .l{font-size:12px;color:#666;margin-top:4px}
+.sc.mod .n{color:#f9a825}
+.sc.add .n{color:#34a853}
+.sc.del .n{color:#ea4335}
+.sc.same .n{color:#1a73e8}
+
+/* 筛选 */
+.pills{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.pill{padding:5px 14px;border:1px solid #ddd;border-radius:20px;font-size:12px;cursor:pointer;background:#fff}
+.pill:hover{border-color:#1a73e8}
+.pill.on{background:#1a73e8;color:#fff;border-color:#1a73e8}
+
+/* 表格 */
+.panel{background:#fff;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:20px;overflow-x:auto}
+.panel h3{font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8f9fa;padding:8px 6px;text-align:left;border-bottom:2px solid #e0e0e0;white-space:nowrap}
+td{padding:6px;border-bottom:1px solid #f0f0f0;max-width:260px;word-break:break-all}
+tr:hover{background:#f8faff}
+tr.r-add{background:#e6f4ea}
+tr.r-del{background:#fce8e6}
+tr.r-mod{background:#fef7e0}
+td.chg{background:#fff3cd;font-weight:bold}
+.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;color:#fff}
+.b-add{background:#34a853}
+.b-del{background:#ea4335}
+.b-mod{background:#f9a825;color:#333}
+.b-same{background:#e0e0e0;color:#666}
+
+/* 差异明细 */
+.di{padding:8px 12px;border-radius:8px;margin-bottom:6px;font-size:12px;line-height:1.5;border-left:4px solid}
+.di.dc{background:#fef7e0;border-color:#f9a825}
+.di.da{background:#fce8e6;border-color:#ea4335}
+.di.db{background:#e6f4ea;border-color:#34a853}
+.di b{color:#333}
+.di .tag{font-size:11px;padding:1px 5px;border-radius:4px;color:#fff;margin-left:6px}
+.tag-c{background:#f9a825;color:#333!important}
+.tag-a{background:#ea4335}
+.tag-b{background:#34a853}
+.va{color:#ea4335;font-weight:bold}
+.vb{color:#34a853;font-weight:bold}
+
+#out{display:none}
+#out.show{display:block}
+@media(max-width:768px){.upload-row{flex-direction:column}.stats{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
-  <header>
-    <h1>⚡ 电子物料BOM查错对比工具</h1>
-    <p>支持不同格式BOM智能匹配对比（公司BOM vs 立创EDA导出）</p>
-  </header>
-  <div class="main">
-    <div class="upload-section">
-      <div class="upload-box" id="uploadA">
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">BOM A（基准版本）</div>
-        <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
-        <div class="upload-info" id="infoA"></div>
-        <div class="field-map" id="fieldsA" style="display:none"></div>
-        <input type="file" id="fileA" accept=".xlsx,.xls,.csv" style="position:absolute;left:-9999px;">
-      </div>
-      <div class="upload-box" id="uploadB">
-        <div class="upload-icon">📄</div>
-        <div class="upload-title">BOM B（对比版本）</div>
-        <div class="upload-hint">点击上传 Excel 文件（公司BOM / 立创BOM 均可）</div>
-        <div class="upload-info" id="infoB"></div>
-        <div class="field-map" id="fieldsB" style="display:none"></div>
-        <input type="file" id="fileB" accept=".xlsx,.xls,.csv" style="position:absolute;left:-9999px;">
-      </div>
-    </div>
-    <div class="config-section">
-      <div class="config-title">⚙️ 对比配置</div>
-      <div class="config-row">
-        <div class="config-item">
-          <label>匹配主键：</label>
-          <select id="keySelect">
-            <option value="型号">型号</option>
-            <option value="位号">位号</option>
-          </select>
-        </div>
-      </div>
-      <div class="compare-fields" style="margin-top:15px;">
-        <div class="config-title" style="font-size:14px;">📋 对比维度（勾选要检查的字段）：</div>
-        <label><input type="checkbox" class="cmp-field" value="型号" checked> 型号</label>
-        <label><input type="checkbox" class="cmp-field" value="位号" checked> 位号</label>
-        <label><input type="checkbox" class="cmp-field" value="封装" checked> 封装</label>
-        <label><input type="checkbox" class="cmp-field" value="数量" checked> 数量</label>
-        <label><input type="checkbox" class="cmp-field" value="参数描述" checked> 参数描述</label>
-        <label><input type="checkbox" class="cmp-field" value="物料编码"> 物料编码</label>
-        <label><input type="checkbox" class="cmp-field" value="物料名称"> 物料名称</label>
-        <label><input type="checkbox" class="cmp-field" value="品牌"> 品牌</label>
-        <label><input type="checkbox" class="cmp-field" value="备注"> 备注</label>
-      </div>
-    </div>
-    <div class="action-bar">
-      <button class="btn btn-primary" id="compareBtn" onclick="doCompare()" disabled>🔍 开始对比</button>
-      <button class="btn btn-export" id="exportBtn" onclick="doExport()" style="display:none">📥 导出报告</button>
-      <button class="btn btn-format" id="formatABtn" onclick="doFormat('AtoB')" style="display:none">📐 按A格式整理B</button>
-      <button class="btn btn-format" id="formatBBtn" onclick="doFormat('BtoA')" style="display:none">📐 按B格式整理A</button>
-    </div>
-    <div id="resultSection">
-      <div class="stats" id="statsCards"></div>
-      <div class="result-section">
-        <div class="result-title">📋 对比详情</div>
-        <div class="filter-bar" id="filterBar"></div>
-        <div style="overflow-x:auto;">
-          <table id="resultTable"><thead></thead><tbody></tbody></table>
-        </div>
-      </div>
-      <div class="diff-detail-section" id="diffDetailSection">
-        <div class="result-title">🔎 差异明细</div>
-        <div class="diff-filter-bar" id="diffFilterBar"></div>
-        <div id="diffDetailList"></div>
-      </div>
-    </div>
+<header>
+<h1>⚡ BOM对比工具</h1>
+<p>支持多种BOM格式智能识别 · 差异明细 · 格式整理导出</p>
+</header>
+<div class="main">
+
+<div class="upload-row">
+  <div class="upload-card" id="boxA">
+    <h3>📄 BOM A（基准版本）</h3>
+    <p>支持 xlsx / xls / csv</p>
+    <button class="file-btn" id="btnA">选择文件</button>
+    <div class="info" id="msgA"></div>
+    <div class="fmap" id="fmA"></div>
   </div>
-  <script>
-    let bomA = null, bomB = null;
-    let compareResult = null;
-    let currentFilter = 'all';
-    let currentDiffFilter = 'all';
+  <div class="upload-card" id="boxB">
+    <h3>📄 BOM B（对比版本）</h3>
+    <p>支持 xlsx / xls / csv</p>
+    <button class="file-btn" id="btnB">选择文件</button>
+    <div class="info" id="msgB"></div>
+    <div class="fmap" id="fmB"></div>
+  </div>
+</div>
 
-    const FIELD_ALIASES = {
-      '型号': ['型号', 'Comment型号', 'Comment', 'Value', 'value', '规格型号', 'LibRef', 'Part', 'PartNumber'],
-      '位号': ['位号', 'Designator位号', 'Designator', 'Reference', 'reference', '位置编号', 'Ref', 'RefDes'],
-      '封装': ['封装', 'Footprint封号', 'Footprint', 'Package', 'package', '封装规格', 'PCB Footprint'],
-      '数量': ['数量', 'Quantity', 'quantity', 'QTY', 'qty', '用量', 'Count'],
-      '物料编码': ['物料编码', 'MPN', '料号', 'Part Number'],
-      '物料名称': ['物料名称', 'Description', 'description', '描述', '名称', 'Desc'],
-      '参数描述': ['参数描述', '规格描述', '详细描述', 'Specification'],
-      '单位': ['单位', 'Unit'],
-      '品牌': ['品牌', 'Brand', 'Manufacturer', '厂商', 'MFR'],
-      '备注': ['备注', 'Note', 'Remark', '说明']
-    };
+<div class="cfg">
+  <h3>⚙️ 对比配置</h3>
+  <div class="cfg-row">
+    <label>匹配主键：</label>
+    <select id="pk"><option value="型号">型号</option><option value="位号">位号</option></select>
+  </div>
+  <div class="cmp-checks">
+    <b style="font-size:13px">对比维度：</b>
+    <label><input type="checkbox" class="cf" value="型号" checked> 型号</label>
+    <label><input type="checkbox" class="cf" value="位号" checked> 位号</label>
+    <label><input type="checkbox" class="cf" value="封装" checked> 封装</label>
+    <label><input type="checkbox" class="cf" value="数量" checked> 数量</label>
+    <label><input type="checkbox" class="cf" value="参数描述" checked> 参数描述</label>
+    <label><input type="checkbox" class="cf" value="物料编码"> 物料编码</label>
+    <label><input type="checkbox" class="cf" value="物料名称"> 物料名称</label>
+    <label><input type="checkbox" class="cf" value="品牌"> 品牌</label>
+  </div>
+</div>
 
-    // 上传逻辑
-    document.getElementById('uploadA').addEventListener('click', function() {
-      var el = document.getElementById('fileA');
-      el.value = null; // 关键：用null而不是''
-      el.click();
-    });
-    document.getElementById('uploadB').addEventListener('click', function() {
-      var el = document.getElementById('fileB');
-      el.value = null;
-      el.click();
-    });
-    document.getElementById('fileA').addEventListener('change', function(e) {
-      if (e.target.files && e.target.files.length > 0) handleFile(e.target.files[0], 'A');
-    });
-    document.getElementById('fileB').addEventListener('change', function(e) {
-      if (e.target.files && e.target.files.length > 0) handleFile(e.target.files[0], 'B');
-    });
+<div class="bar">
+  <button class="btn btn-blue" id="goBtn" disabled>🔍 开始对比</button>
+  <button class="btn btn-green" id="expBtn" style="display:none">📥 导出报告</button>
+  <button class="btn btn-purple" id="fmtAB" style="display:none">📐 按A格式整理B</button>
+  <button class="btn btn-purple" id="fmtBA" style="display:none">📐 按B格式整理A</button>
+</div>
 
-    function handleFile(file, side) {
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onerror = function() { alert('文件读取失败，请重试'); };
-      reader.onload = function(evt) {
-        try {
-          var wb = XLSX.read(evt.target.result, { type: 'array' });
-          var parsed = parseBOM(wb);
-          if (side === 'A') {
-            bomA = parsed; bomA._fileName = file.name;
-            document.getElementById('uploadA').classList.add('loaded');
-            document.getElementById('infoA').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
-            showFieldMap('fieldsA', parsed);
-          } else {
-            bomB = parsed; bomB._fileName = file.name;
-            document.getElementById('uploadB').classList.add('loaded');
-            document.getElementById('infoB').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
-            showFieldMap('fieldsB', parsed);
-          }
-          document.getElementById('compareBtn').disabled = !(bomA && bomB);
-        } catch(err) {
-          alert('文件解析失败：' + err.message + '\n请确认是Excel格式(.xlsx/.xls/.csv)');
-          console.error('解析错误:', err);
+<div id="out">
+  <div class="stats" id="st"></div>
+  <div class="panel"><h3>📋 对比总览</h3><div class="pills" id="fp"></div><div style="overflow-x:auto"><table id="tb"><thead></thead><tbody></tbody></table></div></div>
+  <div class="panel"><h3>🔎 差异明细</h3><div class="pills" id="dp"></div><div id="dl"></div></div>
+</div>
+
+</div>
+<script>
+var A=null,B=null,RES=null,F1='all',F2='all';
+
+// 字段别名
+var ALIAS={
+'型号':['型号','Comment型号','Comment','Value','value','规格型号','LibRef','Part'],
+'位号':['位号','Designator位号','Designator','Reference','reference','位置编号','Ref','RefDes'],
+'封装':['封装','Footprint封装','Footprint','Package','package','封装规格','PCB Footprint'],
+'数量':['数量','Quantity','quantity','QTY','qty','用量','Count'],
+'物料编码':['物料编码','MPN','料号','Part Number','PartNumber'],
+'物料名称':['物料名称','Description','description','描述','名称','Desc'],
+'参数描述':['参数描述','规格描述','详细描述','Specification'],
+'单位':['单位','Unit'],
+'品牌':['品牌','Brand','Manufacturer','厂商','MFR'],
+'备注':['备注','Note','Remark','说明']
+};
+
+// === 上传 ===
+function bindUpload(btnId,boxId,msgId,fmId,side){
+  document.getElementById(btnId).addEventListener('click',function(e){
+    e.stopPropagation();
+    var inp=document.createElement('input');
+    inp.type='file';
+    inp.accept='.xlsx,.xls,.csv';
+    inp.onchange=function(){
+      var f=inp.files[0];
+      if(!f)return;
+      var rd=new FileReader();
+      rd.onload=function(ev){
+        try{
+          var wb=XLSX.read(ev.target.result,{type:'array'});
+          var p=parse(wb);
+          if(side==='A'){A=p;A._fn=f.name}else{B=p;B._fn=f.name}
+          document.getElementById(boxId).classList.add('ok');
+          document.getElementById(msgId).textContent='✅ '+f.name+'（'+p.rows.length+'条物料）';
+          var fm=document.getElementById(fmId);
+          var h='';for(var k in p.fm)h+=k+' ← '+p.fm[k]+'<br>';
+          fm.innerHTML=h;fm.style.display='block';
+          document.getElementById('goBtn').disabled=!(A&&B);
+        }catch(err){
+          alert('解析失败：'+err.message);
+          console.error(err);
         }
       };
-      reader.readAsArrayBuffer(file);
-    }
+      rd.readAsArrayBuffer(f);
+    };
+    inp.click();
+  });
+}
+bindUpload('btnA','boxA','msgA','fmA','A');
+bindUpload('btnB','boxB','msgB','fmB','B');
 
-    function showFieldMap(elId, parsed) {
-      var el = document.getElementById(elId);
-      var html = '<div><b>识别到的字段映射：</b></div>';
-      for (var std in parsed.fieldMap) { html += '<div>' + std + ' ← ' + parsed.fieldMap[std] + '</div>'; }
-      el.innerHTML = html; el.style.display = 'block';
-    }
+// === 解析BOM ===
+function parse(wb){
+  var sn=wb.SheetNames.find(function(n){return n.includes('BOM')||n.includes('bom')})||wb.SheetNames[0];
+  var raw=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+  // 找表头
+  var hi=-1;
+  for(var i=0;i<Math.min(raw.length,30);i++){
+    if(!raw[i])continue;
+    var r=raw[i].map(function(c){return String(c||'')});
+    var mc=0;
+    for(var s in ALIAS){for(var a=0;a<ALIAS[s].length;a++){if(r.some(function(c){return c===ALIAS[s][a]||c.indexOf(ALIAS[s][a])>=0})){mc++;break}}}
+    if(mc>=2){hi=i;break}
+  }
+  if(hi<0){for(var i=0;i<raw.length;i++){if(raw[i]&&raw[i].length>1&&raw[i].some(function(c){return c!==null&&c!==undefined&&String(c).trim()!==''})){hi=i;break}}}
+  if(hi<0)hi=0;
+  if(!raw[hi])return{hd:[],rows:[],sn:sn,fm:{}};
+  var hd=raw[hi].map(function(c){return String(c||'').trim()});
+  // 字段映射
+  var fm={},used={};
+  for(var s in ALIAS){for(var a=0;a<ALIAS[s].length;a++){var f=hd.find(function(h){return!used[h]&&h===ALIAS[s][a]});if(f){fm[s]=f;used[f]=1;break}}}
+  for(var s in ALIAS){if(fm[s])continue;for(var a=0;a<ALIAS[s].length;a++){var f=hd.find(function(h){return!used[h]&&h.indexOf(ALIAS[s][a])>=0});if(f){fm[s]=f;used[f]=1;break}}}
+  var rows=[];
+  for(var i=hi+1;i<raw.length;i++){
+    var r=raw[i];if(!r)continue;
+    var o={},has=false;
+    hd.forEach(function(h,idx){var v=(r[idx]!==undefined&&r[idx]!==null)?String(r[idx]).trim():'';if(h)o[h]=v;if(v)has=true});
+    if(!has)continue;
+    var u={};for(var s in fm)u[s]=o[fm[s]]||'';
+    if(!u['数量']&&u['位号'])u['数量']=String(u['位号'].split(',').length);
+    if(u['型号']||u['位号'])rows.push(u);
+  }
+  return{hd:hd,rows:rows,sn:sn,fm:fm};
+}
 
-    function parseBOM(wb) {
-      var sheetName = wb.SheetNames.find(function(n) { return n.includes('BOM') || n.includes('bom'); }) || wb.SheetNames[0];
-      var ws = wb.Sheets[sheetName];
-      var raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
+// 型号归一化
+function norm(v){if(!v)return'';return v.trim().replace(/\s+(SC)?(0201|0402|0603|0805|1206|1210|2010|2512|04020|SOT-?\d+|SOP-?\d+|QFN-?\d+|TQFP-?\d+|BGA-?\d+)\s*$/i,'').trim()}
 
-      // 过滤掉完全空的行
-      var nonEmptyRows = [];
-      raw.forEach(function(r, i) { if (r && r.length > 0 && r.some(function(c) { return c !== null && c !== undefined && String(c).trim() !== ''; })) nonEmptyRows.push(i); });
+// === 对比 ===
+document.getElementById('goBtn').onclick=doCompare;
+function doCompare(){
+  if(!A||!B)return;
+  var pk=document.getElementById('pk').value;
+  var cf=[];document.querySelectorAll('.cf:checked').forEach(function(c){cf.push(c.value)});
+  var mA=new Map(),mB=new Map(),fA=new Map(),fB=new Map();
+  A.rows.forEach(function(r){var k=(r[pk]||'').trim();if(k){mA.set(k,r);var n=norm(k);if(!fA.has(n))fA.set(n,{k:k,r:r})}});
+  B.rows.forEach(function(r){var k=(r[pk]||'').trim();if(k){mB.set(k,r);var n=norm(k);if(!fB.has(n))fB.set(n,{k:k,r:r})}});
+  var res=[],mb=new Set();
+  mA.forEach(function(rA,kA){
+    if(mB.has(kA)){var rB=mB.get(kA),d={},hd=false;cf.forEach(function(f){var a=(rA[f]||'').trim(),b=(rB[f]||'').trim();if(a!==b){d[f]={a:a,b:b};hd=true}});res.push({s:hd?'mod':'same',k:kA,rA:rA,rB:rB,d:d});mb.add(kA)}
+    else{var n=norm(kA);if(fB.has(n)&&!mb.has(fB.get(n).k)){var m=fB.get(n),rB=m.r,d={},hd=false;cf.forEach(function(f){var a=(rA[f]||'').trim(),b=(rB[f]||'').trim();if(a!==b){d[f]={a:a,b:b};hd=true}});res.push({s:hd?'mod':'same',k:kA+' ↔ '+m.k,rA:rA,rB:rB,d:d});mb.add(m.k)}
+    else res.push({s:'del',k:kA,rA:rA,rB:null,d:{}})}
+  });
+  mB.forEach(function(rB,kB){if(!mb.has(kB)){var n=norm(kB),hit=false;fA.forEach(function(_,nA){if(nA===n)hit=true});if(!hit)res.push({s:'add',k:kB,rA:null,rB:rB,d:{}})}});
+  var ord={mod:0,add:1,del:2,same:3};res.sort(function(a,b){return ord[a.s]-ord[b.s]});
+  RES={res:res,cf:cf,pk:pk};F1='all';F2='all';
+  render();renderDiff();
+  document.getElementById('out').classList.add('show');
+  ['expBtn','fmtAB','fmtBA'].forEach(function(id){document.getElementById(id).style.display='inline-block'});
+  document.getElementById('out').scrollIntoView({behavior:'smooth'});
+}
 
-      var headerIdx = -1;
-      // 方法1：找包含已知字段名的行
-      for (var i = 0; i < Math.min(raw.length, 30); i++) {
-        if (!raw[i] || raw[i].length === 0) continue;
-        var row = raw[i].map(function(c) { return String(c || ''); });
-        var matchCount = 0;
-        for (var std in FIELD_ALIASES) {
-          var aliases = FIELD_ALIASES[std];
-          for (var a = 0; a < aliases.length; a++) {
-            if (row.some(function(c) { return c.includes(aliases[a]); })) { matchCount++; break; }
-          }
-        }
-        if (matchCount >= 2) { headerIdx = i; break; }
-      }
-      // 方法2：如果没找到，用第一个非空行作为表头
-      if (headerIdx === -1) {
-        headerIdx = nonEmptyRows.length > 0 ? nonEmptyRows[0] : 0;
-      }
+// === 渲染总览 ===
+function render(){
+  var r=RES.res,cf=RES.cf,pk=RES.pk;
+  var c={mod:0,add:0,del:0,same:0};r.forEach(function(x){c[x.s]++});
+  document.getElementById('st').innerHTML='<div class="sc mod"><div class="n">'+c.mod+'</div><div class="l">🟡 有差异</div></div><div class="sc add"><div class="n">'+c.add+'</div><div class="l">🟢 B独有</div></div><div class="sc del"><div class="n">'+c.del+'</div><div class="l">🔴 A独有</div></div><div class="sc same"><div class="n">'+c.same+'</div><div class="l">⚪ 一致</div></div>';
+  var pills=[['all','全部',r.length],['mod','🟡差异',c.mod],['add','🟢B独有',c.add],['del','🔴A独有',c.del],['same','⚪一致',c.same]];
+  document.getElementById('fp').innerHTML=pills.map(function(p){return'<div class="pill'+(F1===p[0]?' on':'')+'" onclick="F1=\''+p[0]+'\';render()">'+p[1]+' ('+p[2]+')</div>'}).join('');
+  var fl=F1==='all'?r:r.filter(function(x){return x.s===F1});
+  var df=[pk];cf.forEach(function(f){if(f!==pk)df.push(f)});
+  var th='<tr><th>状态</th>';df.forEach(function(f){th+='<th>'+f+'(A)</th><th>'+f+'(B)</th>'});th+='</tr>';
+  var sm={add:'<span class="badge b-add">B独有</span>',del:'<span class="badge b-del">A独有</span>',mod:'<span class="badge b-mod">有差异</span>',same:'<span class="badge b-same">一致</span>'};
+  var rc={add:'r-add',del:'r-del',mod:'r-mod',same:''};
+  var tb='';fl.forEach(function(x){tb+='<tr class="'+rc[x.s]+'"><td>'+sm[x.s]+'</td>';df.forEach(function(f){var a=x.rA?(x.rA[f]||''):'',b=x.rB?(x.rB[f]||''):'',ch=x.d[f]?' class="chg"':'';tb+='<td'+ch+'>'+esc(a)+'</td><td'+ch+'>'+esc(b)+'</td>'});tb+='</tr>'});
+  document.querySelector('#tb thead').innerHTML=th;
+  document.querySelector('#tb tbody').innerHTML=tb;
+}
 
-      // 防御：确保 headerIdx 有效
-      if (!raw[headerIdx] || raw[headerIdx].length === 0) {
-        return { headers: [], rows: [], sheetName: sheetName, fieldMap: {} };
-      }
+// === 渲染差异明细 ===
+function renderDiff(){
+  var r=RES.res,items=[];
+  r.forEach(function(x){
+    if(x.s==='mod')for(var f in x.d)items.push({t:'c',k:x.k,f:f,a:x.d[f].a,b:x.d[f].b});
+    else if(x.s==='del')items.push({t:'a',k:x.k});
+    else if(x.s==='add')items.push({t:'b',k:x.k});
+  });
+  var c={c:0,a:0,b:0};items.forEach(function(d){c[d.t]++});
+  var pills=[['all','全部',items.length],['c','🟡字段变更',c.c],['a','🔴A独有',c.a],['b','🟢B独有',c.b]];
+  document.getElementById('dp').innerHTML=pills.map(function(p){return'<div class="pill'+(F2===p[0]?' on':'')+'" onclick="F2=\''+p[0]+'\';renderDiff()">'+p[1]+' ('+p[2]+')</div>'}).join('');
+  var fl=F2==='all'?items:items.filter(function(d){return d.t===F2});
+  if(!fl.length){document.getElementById('dl').innerHTML='<div style="text-align:center;color:#999;padding:20px">🎉 没有差异</div>';return}
+  var h='';fl.forEach(function(d){
+    if(d.t==='c')h+='<div class="di dc"><b>'+esc(d.k)+'</b><span class="tag tag-c">'+d.f+'不同</span><br>A: <span class="va">'+esc(d.a||'(空)')+'</span> → B: <span class="vb">'+esc(d.b||'(空)')+'</span></div>';
+    else if(d.t==='a')h+='<div class="di da"><b>'+esc(d.k)+'</b><span class="tag tag-a">A独有</span><br>B中不存在此物料</div>';
+    else h+='<div class="di db"><b>'+esc(d.k)+'</b><span class="tag tag-b">B独有</span><br>A中不存在此物料</div>';
+  });
+  document.getElementById('dl').innerHTML=h;
+}
 
-      var headers = raw[headerIdx].map(function(h) { return String(h || '').trim(); });
-      // 字段映射：先精确匹配，再模糊匹配
-      var fieldMap = {};
-      var usedHeaders = new Set();
-      // 第一轮：精确匹配
-      for (var std in FIELD_ALIASES) {
-        var aliases = FIELD_ALIASES[std];
-        for (var a = 0; a < aliases.length; a++) {
-          var found = headers.find(function(h) { return !usedHeaders.has(h) && h === aliases[a]; });
-          if (found) { fieldMap[std] = found; usedHeaders.add(found); break; }
-        }
-      }
-      // 第二轮：包含匹配（未匹配的字段）
-      for (var std in FIELD_ALIASES) {
-        if (fieldMap[std]) continue;
-        var aliases = FIELD_ALIASES[std];
-        for (var a = 0; a < aliases.length; a++) {
-          var found = headers.find(function(h) { return !usedHeaders.has(h) && h.includes(aliases[a]); });
-          if (found) { fieldMap[std] = found; usedHeaders.add(found); break; }
-        }
-      }
-      var rows = [];
-      for (var i = headerIdx + 1; i < raw.length; i++) {
-        var r = raw[i];
-        if (!r || r.length === 0) continue;
-        var obj = {}, hasData = false;
-        headers.forEach(function(h, idx) {
-          var val = (r[idx] !== undefined && r[idx] !== null) ? String(r[idx]).trim() : '';
-          if (h) obj[h] = val;
-          if (val) hasData = true;
-        });
-        if (!hasData) continue;
-        var unified = {};
-        for (var std in fieldMap) { unified[std] = obj[fieldMap[std]] || ''; }
-        if (!unified['数量'] && unified['位号']) {
-          unified['数量'] = String(unified['位号'].split(',').length);
-        }
-        if (unified['型号'] || unified['位号']) rows.push(unified);
-      }
-      return { headers: headers, rows: rows, sheetName: sheetName, fieldMap: fieldMap };
-    }
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
-    // 提取型号的核心值（去掉封装后缀，如 "4.7uF 0201" -> "4.7uF"）
-    function normalizeModel(val) {
-      if (!val) return '';
-      val = val.trim();
-      // 去掉常见封装后缀：0201, 0402, 0603, 0805, 1206 等
-      return val.replace(/\s+(SC)?(0201|0402|0603|0805|1206|1210|2010|2512|04020|SOT-?\d+|SOP-?\d+|QFN-?\d+|TQFP-?\d+|BGA-?\d+)\s*$/i, '').trim();
-    }
+// === 导出报告 ===
+document.getElementById('expBtn').onclick=function(){
+  if(!RES)return;
+  var r=RES.res,cf=RES.cf,pk=RES.pk;
+  var df=[pk];cf.forEach(function(f){if(f!==pk)df.push(f)});
+  var sm={add:'B独有',del:'A独有',mod:'有差异',same:'一致'};
+  var out=[];
+  r.forEach(function(x){var row={'状态':sm[x.s]};df.forEach(function(f){row[f+'(A)']=x.rA?(x.rA[f]||''):'';row[f+'(B)']=x.rB?(x.rB[f]||''):''}); out.push(row)});
+  var ws=XLSX.utils.json_to_sheet(out);var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'对比报告');XLSX.writeFile(wb,'BOM对比报告.xlsx');
+};
 
-    function doCompare() {
-      if (!bomA || !bomB) return;
-      var keyField = document.getElementById('keySelect').value;
-      var cmpFields = [];
-      document.querySelectorAll('.cmp-field:checked').forEach(function(cb) { cmpFields.push(cb.value); });
-
-      var mapA = new Map(), mapB = new Map();
-      // 同时建立精确索引和模糊索引
-      var fuzzyMapA = new Map(), fuzzyMapB = new Map();
-
-      bomA.rows.forEach(function(r) {
-        var key = (r[keyField] || '').trim();
-        if (key) {
-          mapA.set(key, r);
-          var nk = normalizeModel(key);
-          if (!fuzzyMapA.has(nk)) fuzzyMapA.set(nk, { key: key, row: r });
-        }
-      });
-      bomB.rows.forEach(function(r) {
-        var key = (r[keyField] || '').trim();
-        if (key) {
-          mapB.set(key, r);
-          var nk = normalizeModel(key);
-          if (!fuzzyMapB.has(nk)) fuzzyMapB.set(nk, { key: key, row: r });
-        }
-      });
-
-      var results = [];
-      var matchedB = new Set(); // 记录已匹配的B项
-
-      mapA.forEach(function(rowA, keyA) {
-        // 先精确匹配
-        if (mapB.has(keyA)) {
-          var rowB = mapB.get(keyA), diffs = {}, hasDiff = false;
-          cmpFields.forEach(function(f) {
-            var valA = (rowA[f] || '').trim(), valB = (rowB[f] || '').trim();
-            if (valA !== valB) { diffs[f] = { old: valA, new: valB }; hasDiff = true; }
-          });
-          results.push({ status: hasDiff ? 'modified' : 'same', key: keyA, rowA: rowA, rowB: rowB, diffs: diffs });
-          matchedB.add(keyA);
-        } else {
-          // 模糊匹配：用核心值匹配
-          var nkA = normalizeModel(keyA);
-          if (fuzzyMapB.has(nkA) && !matchedB.has(fuzzyMapB.get(nkA).key)) {
-            var match = fuzzyMapB.get(nkA);
-            var rowB = match.row, diffs = {}, hasDiff = false;
-            cmpFields.forEach(function(f) {
-              var valA = (rowA[f] || '').trim(), valB = (rowB[f] || '').trim();
-              if (valA !== valB) { diffs[f] = { old: valA, new: valB }; hasDiff = true; }
-            });
-            results.push({ status: hasDiff ? 'modified' : 'same', key: keyA + ' ↔ ' + match.key, rowA: rowA, rowB: rowB, diffs: diffs });
-            matchedB.add(match.key);
-          } else {
-            results.push({ status: 'removed', key: keyA, rowA: rowA, rowB: null, diffs: {} });
-          }
-        }
-      });
-
-      // B中未匹配的项
-      mapB.forEach(function(rowB, keyB) {
-        if (!matchedB.has(keyB)) {
-          var nkB = normalizeModel(keyB);
-          var alreadyMatched = false;
-          fuzzyMapA.forEach(function(v, nkA) { if (nkA === nkB) alreadyMatched = true; });
-          if (!alreadyMatched) {
-            results.push({ status: 'added', key: keyB, rowA: null, rowB: rowB, diffs: {} });
-          }
-        }
-      });
-      var order = { modified: 0, added: 1, removed: 2, same: 3 };
-      results.sort(function(a, b) { return order[a.status] - order[b.status]; });
-      compareResult = { results: results, cmpFields: cmpFields, keyField: keyField };
-      currentFilter = 'all'; currentDiffFilter = 'all';
-      renderResult();
-      renderDiffDetail();
-      document.getElementById('formatABtn').style.display = 'inline-block';
-      document.getElementById('formatBBtn').style.display = 'inline-block';
-    }
-
-    function renderResult() {
-      var results = compareResult.results, cmpFields = compareResult.cmpFields, keyField = compareResult.keyField;
-      var counts = { added: 0, removed: 0, modified: 0, same: 0 };
-      results.forEach(function(r) { counts[r.status]++; });
-      document.getElementById('statsCards').innerHTML =
-        '<div class="stat-card modified"><div class="stat-number">' + counts.modified + '</div><div class="stat-label">🟡 有差异</div></div>' +
-        '<div class="stat-card added"><div class="stat-number">' + counts.added + '</div><div class="stat-label">🟢 B独有</div></div>' +
-        '<div class="stat-card removed"><div class="stat-number">' + counts.removed + '</div><div class="stat-label">🔴 A独有</div></div>' +
-        '<div class="stat-card same"><div class="stat-number">' + counts.same + '</div><div class="stat-label">⚪ 一致</div></div>';
-      var filterHtml =
-        '<div class="filter-btn ' + (currentFilter === 'all' ? 'active' : '') + '" onclick="setFilter(\'all\')">全部 (' + results.length + ')</div>' +
-        '<div class="filter-btn ' + (currentFilter === 'modified' ? 'active' : '') + '" onclick="setFilter(\'modified\')">🟡 有差异 (' + counts.modified + ')</div>' +
-        '<div class="filter-btn ' + (currentFilter === 'added' ? 'active' : '') + '" onclick="setFilter(\'added\')">🟢 B独有 (' + counts.added + ')</div>' +
-        '<div class="filter-btn ' + (currentFilter === 'removed' ? 'active' : '') + '" onclick="setFilter(\'removed\')">🔴 A独有 (' + counts.removed + ')</div>' +
-        '<div class="filter-btn ' + (currentFilter === 'same' ? 'active' : '') + '" onclick="setFilter(\'same\')">⚪ 一致 (' + counts.same + ')</div>';
-      document.getElementById('filterBar').innerHTML = filterHtml;
-      var filtered = currentFilter === 'all' ? results : results.filter(function(r) { return r.status === currentFilter; });
-      var displayFields = [keyField];
-      cmpFields.forEach(function(f) { if (f !== keyField) displayFields.push(f); });
-      var thead = '<tr><th>状态</th>';
-      displayFields.forEach(function(f) { thead += '<th>' + f + '(A)</th><th>' + f + '(B)</th>'; });
-      thead += '</tr>';
-      var tbody = '';
-      filtered.forEach(function(item) {
-        tbody += '<tr class="row-' + item.status + '">';
-        var statusMap = { added: '<span class="status-badge badge-added">B独有</span>', removed: '<span class="status-badge badge-removed">A独有</span>', modified: '<span class="status-badge badge-modified">有差异</span>', same: '<span class="status-badge badge-same">一致</span>' };
-        tbody += '<td>' + statusMap[item.status] + '</td>';
-        displayFields.forEach(function(f) {
-          var valA = item.rowA ? (item.rowA[f] || '') : '';
-          var valB = item.rowB ? (item.rowB[f] || '') : '';
-          var changed = item.diffs[f] ? ' class="cell-changed"' : '';
-          tbody += '<td' + changed + '>' + valA + '</td><td' + changed + '>' + valB + '</td>';
-        });
-        tbody += '</tr>';
-      });
-      document.querySelector('#resultTable thead').innerHTML = thead;
-      document.querySelector('#resultTable tbody').innerHTML = tbody;
-      document.getElementById('resultSection').classList.add('show');
-      document.getElementById('exportBtn').style.display = 'inline-block';
-      document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function renderDiffDetail() {
-      if (!compareResult) return;
-      var results = compareResult.results, keyField = compareResult.keyField;
-      var diffItems = [];
-      results.forEach(function(item) {
-        if (item.status === 'modified') {
-          for (var f in item.diffs) {
-            diffItems.push({ type: 'change', key: item.key, field: f, valA: item.diffs[f].old, valB: item.diffs[f].new });
-          }
-        } else if (item.status === 'removed') {
-          diffItems.push({ type: 'a-only', key: item.key });
-        } else if (item.status === 'added') {
-          diffItems.push({ type: 'b-only', key: item.key });
-        }
-      });
-      var counts = { change: 0, 'a-only': 0, 'b-only': 0 };
-      diffItems.forEach(function(d) { counts[d.type]++; });
-      var total = diffItems.length;
-      var filterHtml =
-        '<div class="filter-btn ' + (currentDiffFilter === 'all' ? 'active' : '') + '" onclick="setDiffFilter(\'all\')">全部 (' + total + ')</div>' +
-        '<div class="filter-btn ' + (currentDiffFilter === 'change' ? 'active' : '') + '" onclick="setDiffFilter(\'change\')">🟡 字段变更 (' + counts.change + ')</div>' +
-        '<div class="filter-btn ' + (currentDiffFilter === 'a-only' ? 'active' : '') + '" onclick="setDiffFilter(\'a-only\')">🔴 A独有 (' + counts['a-only'] + ')</div>' +
-        '<div class="filter-btn ' + (currentDiffFilter === 'b-only' ? 'active' : '') + '" onclick="setDiffFilter(\'b-only\')">🟢 B独有 (' + counts['b-only'] + ')</div>';
-      document.getElementById('diffFilterBar').innerHTML = filterHtml;
-      var filtered = currentDiffFilter === 'all' ? diffItems : diffItems.filter(function(d) { return d.type === currentDiffFilter; });
-      var html = '';
-      if (filtered.length === 0) {
-        html = '<div style="text-align:center;color:#999;padding:30px;">🎉 没有差异项</div>';
-      } else {
-        filtered.forEach(function(d) {
-          if (d.type === 'change') {
-            html += '<div class="diff-item diff-field-change">' +
-              '<span class="diff-key">' + esc(d.key) + '</span>' +
-              '<span class="diff-type diff-type-change">' + d.field + '不同</span>' +
-              '<div class="diff-detail">A: <span class="val-a">' + esc(d.valA || '(空)') + '</span> → B: <span class="val-b">' + esc(d.valB || '(空)') + '</span></div></div>';
-          } else if (d.type === 'a-only') {
-            html += '<div class="diff-item diff-a-only">' +
-              '<span class="diff-key">' + esc(d.key) + '</span>' +
-              '<span class="diff-type diff-type-a-only">A独有</span>' +
-              '<div class="diff-detail">B中不存在此物料</div></div>';
-          } else {
-            html += '<div class="diff-item diff-b-only">' +
-              '<span class="diff-key">' + esc(d.key) + '</span>' +
-              '<span class="diff-type diff-type-b-only">B独有</span>' +
-              '<div class="diff-detail">A中不存在此物料</div></div>';
-          }
-        });
-      }
-      document.getElementById('diffDetailList').innerHTML = html;
-    }
-
-    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-    function setFilter(f) { currentFilter = f; renderResult(); }
-    function setDiffFilter(f) { currentDiffFilter = f; renderDiffDetail(); }
-
-    function doExport() {
-      if (!compareResult) return;
-      var results = compareResult.results, cmpFields = compareResult.cmpFields, keyField = compareResult.keyField;
-      var displayFields = [keyField];
-      cmpFields.forEach(function(f) { if (f !== keyField) displayFields.push(f); });
-      var statusMap = { added: 'B独有', removed: 'A独有', modified: '有差异', same: '一致' };
-      var exportData = [];
-      results.forEach(function(item) {
-        var row = { '状态': statusMap[item.status] };
-        displayFields.forEach(function(f) {
-          row[f + '(A)'] = item.rowA ? (item.rowA[f] || '') : '';
-          row[f + '(B)'] = item.rowB ? (item.rowB[f] || '') : '';
-        });
-        exportData.push(row);
-      });
-      var ws = XLSX.utils.json_to_sheet(exportData);
-      var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'BOM对比报告');
-      XLSX.writeFile(wb, 'BOM对比报告.xlsx');
-    }
-
-    function doFormat(direction) {
-      if (!bomA || !bomB) return;
-      var templateBom, dataBom, templateLabel, dataLabel;
-      if (direction === 'AtoB') {
-        templateBom = bomA; dataBom = bomB; templateLabel = 'A'; dataLabel = 'B';
-      } else {
-        templateBom = bomB; dataBom = bomA; templateLabel = 'B'; dataLabel = 'A';
-      }
-      // Build reverse field map for template: originalHeader -> standardField
-      var templateReverseMap = {};
-      for (var std in templateBom.fieldMap) { templateReverseMap[templateBom.fieldMap[std]] = std; }
-      // Build data field map: standardField -> originalHeader
-      var dataFieldMap = dataBom.fieldMap;
-      // Use template's original headers in order
-      var outHeaders = templateBom.headers.filter(function(h) { return h; });
-      var outRows = [];
-      dataBom.rows.forEach(function(unifiedRow) {
-        var row = [];
-        outHeaders.forEach(function(origHeader) {
-          var stdField = templateReverseMap[origHeader];
-          if (stdField && unifiedRow[stdField] !== undefined) {
-            row.push(unifiedRow[stdField]);
-          } else {
-            row.push('');
-          }
-        });
-        outRows.push(row);
-      });
-      var sheetData = [outHeaders].concat(outRows);
-      var ws = XLSX.utils.aoa_to_sheet(sheetData);
-      var wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'BOM整理');
-      var fileName = dataLabel + '整理后_按' + templateLabel + '格式.xlsx';
-      XLSX.writeFile(wb, fileName);
-    }
-  </script>
+// === 格式整理 ===
+function fmt(dir){
+  if(!A||!B)return;
+  var tpl=dir==='AB'?A:B, dat=dir==='AB'?B:A, tl=dir==='AB'?'A':'B', dl=dir==='AB'?'B':'A';
+  var rev={};for(var s in tpl.fm)rev[tpl.fm[s]]=s;
+  var hd=tpl.hd.filter(function(h){return h});
+  var rows=[];
+  dat.rows.forEach(function(u){var r=[];hd.forEach(function(h){var s=rev[h];r.push(s&&u[s]!==undefined?u[s]:'')});rows.push(r)});
+  var ws=XLSX.utils.aoa_to_sheet([hd].concat(rows));
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'BOM整理');
+  XLSX.writeFile(wb,dl+'整理后_按'+tl+'格式.xlsx');
+}
+document.getElementById('fmtAB').onclick=function(){fmt('AB')};
+document.getElementById('fmtBA').onclick=function(){fmt('BA')};
+</script>
 </body>
 </html>
