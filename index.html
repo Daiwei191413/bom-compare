@@ -268,29 +268,82 @@
       return { headers: headers, rows: rows, sheetName: sheetName, fieldMap: fieldMap };
     }
 
+    // 提取型号的核心值（去掉封装后缀，如 "4.7uF 0201" -> "4.7uF"）
+    function normalizeModel(val) {
+      if (!val) return '';
+      val = val.trim();
+      // 去掉常见封装后缀：0201, 0402, 0603, 0805, 1206 等
+      return val.replace(/\s+(SC)?(0201|0402|0603|0805|1206|1210|2010|2512|04020|SOT-?\d+|SOP-?\d+|QFN-?\d+|TQFP-?\d+|BGA-?\d+)\s*$/i, '').trim();
+    }
+
     function doCompare() {
       if (!bomA || !bomB) return;
       var keyField = document.getElementById('keySelect').value;
       var cmpFields = [];
       document.querySelectorAll('.cmp-field:checked').forEach(function(cb) { cmpFields.push(cb.value); });
+
       var mapA = new Map(), mapB = new Map();
-      bomA.rows.forEach(function(r) { var key = (r[keyField] || '').trim(); if (key) mapA.set(key, r); });
-      bomB.rows.forEach(function(r) { var key = (r[keyField] || '').trim(); if (key) mapB.set(key, r); });
+      // 同时建立精确索引和模糊索引
+      var fuzzyMapA = new Map(), fuzzyMapB = new Map();
+
+      bomA.rows.forEach(function(r) {
+        var key = (r[keyField] || '').trim();
+        if (key) {
+          mapA.set(key, r);
+          var nk = normalizeModel(key);
+          if (!fuzzyMapA.has(nk)) fuzzyMapA.set(nk, { key: key, row: r });
+        }
+      });
+      bomB.rows.forEach(function(r) {
+        var key = (r[keyField] || '').trim();
+        if (key) {
+          mapB.set(key, r);
+          var nk = normalizeModel(key);
+          if (!fuzzyMapB.has(nk)) fuzzyMapB.set(nk, { key: key, row: r });
+        }
+      });
+
       var results = [];
-      mapA.forEach(function(rowA, key) {
-        if (mapB.has(key)) {
-          var rowB = mapB.get(key), diffs = {}, hasDiff = false;
+      var matchedB = new Set(); // 记录已匹配的B项
+
+      mapA.forEach(function(rowA, keyA) {
+        // 先精确匹配
+        if (mapB.has(keyA)) {
+          var rowB = mapB.get(keyA), diffs = {}, hasDiff = false;
           cmpFields.forEach(function(f) {
             var valA = (rowA[f] || '').trim(), valB = (rowB[f] || '').trim();
             if (valA !== valB) { diffs[f] = { old: valA, new: valB }; hasDiff = true; }
           });
-          results.push({ status: hasDiff ? 'modified' : 'same', key: key, rowA: rowA, rowB: rowB, diffs: diffs });
+          results.push({ status: hasDiff ? 'modified' : 'same', key: keyA, rowA: rowA, rowB: rowB, diffs: diffs });
+          matchedB.add(keyA);
         } else {
-          results.push({ status: 'removed', key: key, rowA: rowA, rowB: null, diffs: {} });
+          // 模糊匹配：用核心值匹配
+          var nkA = normalizeModel(keyA);
+          if (fuzzyMapB.has(nkA) && !matchedB.has(fuzzyMapB.get(nkA).key)) {
+            var match = fuzzyMapB.get(nkA);
+            var rowB = match.row, diffs = {}, hasDiff = false;
+            cmpFields.forEach(function(f) {
+              var valA = (rowA[f] || '').trim(), valB = (rowB[f] || '').trim();
+              if (valA !== valB) { diffs[f] = { old: valA, new: valB }; hasDiff = true; }
+            });
+            results.push({ status: hasDiff ? 'modified' : 'same', key: keyA + ' ↔ ' + match.key, rowA: rowA, rowB: rowB, diffs: diffs });
+            matchedB.add(match.key);
+          } else {
+            results.push({ status: 'removed', key: keyA, rowA: rowA, rowB: null, diffs: {} });
+          }
         }
       });
-      mapB.forEach(function(rowB, key) {
-        if (!mapA.has(key)) results.push({ status: 'added', key: key, rowA: null, rowB: rowB, diffs: {} });
+
+      // B中未匹配的项
+      mapB.forEach(function(rowB, keyB) {
+        if (!matchedB.has(keyB)) {
+          var nkB = normalizeModel(keyB);
+          var alreadyMatched = false;
+          fuzzyMapA.forEach(function(v, nkA) { if (nkA === nkB) alreadyMatched = true; });
+          if (!alreadyMatched) {
+            results.push({ status: 'added', key: keyB, rowA: null, rowB: rowB, diffs: {} });
+          }
+        }
       });
       var order = { modified: 0, added: 1, removed: 2, same: 3 };
       results.sort(function(a, b) { return order[a.status] - order[b.status]; });
