@@ -188,8 +188,8 @@
     document.getElementById('uploadB').addEventListener('click', function(e) {
       if (e.target.tagName !== 'INPUT') document.getElementById('fileB').click();
     });
-    document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); });
-    document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
+    document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); this.value = ''; });
+    document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); this.value = ''; });
 
     function handleFile(e, side) {
       var file = e.target.files[0];
