@@ -182,36 +182,44 @@
       '备注': ['备注', 'Note', 'Remark', '说明']
     };
 
-    document.getElementById('uploadA').addEventListener('click', function(e) {
-      if (e.target.tagName !== 'INPUT') document.getElementById('fileA').click();
+    document.getElementById('uploadA').addEventListener('click', function() {
+      document.getElementById('fileA').value = '';
+      document.getElementById('fileA').click();
     });
-    document.getElementById('uploadB').addEventListener('click', function(e) {
-      if (e.target.tagName !== 'INPUT') document.getElementById('fileB').click();
+    document.getElementById('uploadB').addEventListener('click', function() {
+      document.getElementById('fileB').value = '';
+      document.getElementById('fileB').click();
     });
+    document.getElementById('fileA').addEventListener('click', function(e) { e.stopPropagation(); });
+    document.getElementById('fileB').addEventListener('click', function(e) { e.stopPropagation(); });
     document.getElementById('fileA').addEventListener('change', function(e) { handleFile(e, 'A'); });
     document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
 
     function handleFile(e, side) {
       var file = e.target.files[0];
       if (!file) return;
-      var inputEl = e.target;
       var reader = new FileReader();
+      reader.onerror = function() { alert('文件读取失败，请重试'); };
       reader.onload = function(evt) {
-        var wb = XLSX.read(evt.target.result, { type: 'array' });
-        var parsed = parseBOM(wb);
-        if (side === 'A') {
-          bomA = parsed; bomA._fileName = file.name;
-          document.getElementById('uploadA').classList.add('loaded');
-          document.getElementById('infoA').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
-          showFieldMap('fieldsA', parsed);
-        } else {
-          bomB = parsed; bomB._fileName = file.name;
-          document.getElementById('uploadB').classList.add('loaded');
-          document.getElementById('infoB').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
-          showFieldMap('fieldsB', parsed);
+        try {
+          var wb = XLSX.read(evt.target.result, { type: 'array' });
+          var parsed = parseBOM(wb);
+          if (side === 'A') {
+            bomA = parsed; bomA._fileName = file.name;
+            document.getElementById('uploadA').classList.add('loaded');
+            document.getElementById('infoA').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
+            showFieldMap('fieldsA', parsed);
+          } else {
+            bomB = parsed; bomB._fileName = file.name;
+            document.getElementById('uploadB').classList.add('loaded');
+            document.getElementById('infoB').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
+            showFieldMap('fieldsB', parsed);
+          }
+          document.getElementById('compareBtn').disabled = !(bomA && bomB);
+        } catch(err) {
+          alert('文件解析失败：' + err.message + '\n请确认是Excel格式(.xlsx/.xls/.csv)');
+          console.error('解析错误:', err);
         }
-        document.getElementById('compareBtn').disabled = !(bomA && bomB);
-        inputEl.value = '';
       };
       reader.readAsArrayBuffer(file);
     }
