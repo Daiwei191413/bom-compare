@@ -13,7 +13,6 @@
     header h1 { font-size: 28px; margin-bottom: 8px; }
     header p { font-size: 14px; opacity: 0.85; }
     .main { max-width: 1400px; margin: 0 auto; padding: 25px; }
-
     .upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
     .upload-box { background: white; border: 2px dashed #ccc; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
     .upload-box:hover { border-color: #1a73e8; background: #f8faff; }
@@ -25,7 +24,6 @@
     .upload-box input { display: none; }
     .field-map { font-size: 12px; color: #666; margin-top: 8px; text-align: left; padding: 8px; background: #f8f9fa; border-radius: 6px; }
     .field-map div { margin: 2px 0; }
-
     .config-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .config-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; }
     .config-row { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
@@ -34,15 +32,15 @@
     .config-item select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
     .compare-fields { margin-top: 15px; }
     .compare-fields label { font-size: 13px; margin-right: 15px; }
-
     .action-bar { text-align: center; margin-bottom: 25px; }
-    .btn { padding: 14px 40px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+    .btn { padding: 14px 40px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s; display: inline-block; }
     .btn-primary { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(26,115,232,0.4); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .btn-export { background: #34a853; color: white; margin-left: 15px; }
     .btn-export:hover { background: #2d9249; }
-
+    .btn-format { background: linear-gradient(135deg, #7c4dff, #651fff); color: white; margin-left: 15px; padding: 10px 20px; font-size: 14px; }
+    .btn-format:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124,77,255,0.4); }
     .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
     .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .stat-number { font-size: 36px; font-weight: bold; }
@@ -51,14 +49,12 @@
     .stat-card.removed .stat-number { color: #ea4335; }
     .stat-card.modified .stat-number { color: #fbbc04; }
     .stat-card.same .stat-number { color: #1a73e8; }
-
-    .result-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+    .result-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; margin-bottom: 25px; }
     .result-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
     .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
     .filter-btn { padding: 6px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 13px; cursor: pointer; background: white; transition: all 0.2s; }
     .filter-btn:hover { border-color: #1a73e8; }
     .filter-btn.active { background: #1a73e8; color: white; border-color: #1a73e8; }
-
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8f9fa; padding: 10px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; font-weight: bold; color: #333; white-space: nowrap; }
     td { padding: 8px; border-bottom: 1px solid #f0f0f0; max-width: 300px; word-break: break-all; }
@@ -74,10 +70,23 @@
     .badge-removed { background: #ea4335; }
     .badge-modified { background: #fbbc04; color: #333; }
     .badge-same { background: #e0e0e0; color: #666; }
-
     #resultSection { display: none; }
     #resultSection.show { display: block; }
-
+    /* 差异明细面板 */
+    .diff-detail-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 25px; }
+    .diff-filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .diff-item { padding: 10px 15px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; border-left: 4px solid; }
+    .diff-item.diff-field-change { background: #fef7e0; border-left-color: #fbbc04; }
+    .diff-item.diff-a-only { background: #fce8e6; border-left-color: #ea4335; }
+    .diff-item.diff-b-only { background: #e6f4ea; border-left-color: #34a853; }
+    .diff-item .diff-key { font-weight: bold; color: #333; }
+    .diff-item .diff-type { font-size: 12px; padding: 1px 6px; border-radius: 4px; color: white; margin-left: 8px; }
+    .diff-type-change { background: #fbbc04; color: #333 !important; }
+    .diff-type-a-only { background: #ea4335; }
+    .diff-type-b-only { background: #34a853; }
+    .diff-item .diff-detail { color: #555; margin-top: 4px; }
+    .diff-item .val-a { color: #ea4335; font-weight: bold; }
+    .diff-item .val-b { color: #34a853; font-weight: bold; }
     @media (max-width: 768px) {
       .upload-section { grid-template-columns: 1fr; }
       .stats { grid-template-columns: repeat(2, 1fr); }
@@ -89,7 +98,6 @@
     <h1>⚡ 电子物料BOM查错对比工具</h1>
     <p>支持不同格式BOM智能匹配对比（公司BOM vs 立创EDA导出）</p>
   </header>
-
   <div class="main">
     <div class="upload-section">
       <div class="upload-box" id="uploadA">
@@ -109,7 +117,6 @@
         <input type="file" id="fileB" accept=".xlsx,.xls,.csv">
       </div>
     </div>
-
     <div class="config-section">
       <div class="config-title">⚙️ 对比配置</div>
       <div class="config-row">
@@ -134,12 +141,12 @@
         <label><input type="checkbox" class="cmp-field" value="备注"> 备注</label>
       </div>
     </div>
-
     <div class="action-bar">
       <button class="btn btn-primary" id="compareBtn" onclick="doCompare()" disabled>🔍 开始对比</button>
       <button class="btn btn-export" id="exportBtn" onclick="doExport()" style="display:none">📥 导出报告</button>
+      <button class="btn btn-format" id="formatABtn" onclick="doFormat('AtoB')" style="display:none">📐 按A格式整理B</button>
+      <button class="btn btn-format" id="formatBBtn" onclick="doFormat('BtoA')" style="display:none">📐 按B格式整理A</button>
     </div>
-
     <div id="resultSection">
       <div class="stats" id="statsCards"></div>
       <div class="result-section">
@@ -149,15 +156,19 @@
           <table id="resultTable"><thead></thead><tbody></tbody></table>
         </div>
       </div>
+      <div class="diff-detail-section" id="diffDetailSection">
+        <div class="result-title">🔎 差异明细</div>
+        <div class="diff-filter-bar" id="diffFilterBar"></div>
+        <div id="diffDetailList"></div>
+      </div>
     </div>
   </div>
-
   <script>
     let bomA = null, bomB = null;
     let compareResult = null;
     let currentFilter = 'all';
+    let currentDiffFilter = 'all';
 
-    // 字段名映射：统一不同BOM格式的列名
     const FIELD_ALIASES = {
       '型号': ['型号', 'Comment型号', 'Comment', 'Value', 'value', '规格型号'],
       '位号': ['位号', 'Designator位号', 'Designator', 'Reference', 'reference', '位置编号'],
@@ -171,7 +182,6 @@
       '备注': ['备注', 'Note', 'Remark', '说明']
     };
 
-    // 上传事件
     document.getElementById('uploadA').addEventListener('click', function(e) {
       if (e.target.tagName !== 'INPUT') document.getElementById('fileA').click();
     });
@@ -182,20 +192,19 @@
     document.getElementById('fileB').addEventListener('change', function(e) { handleFile(e, 'B'); });
 
     function handleFile(e, side) {
-      const file = e.target.files[0];
+      var file = e.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function(evt) {
-        const wb = XLSX.read(evt.target.result, { type: 'array' });
-        const parsed = parseBOM(wb);
-
+        var wb = XLSX.read(evt.target.result, { type: 'array' });
+        var parsed = parseBOM(wb);
         if (side === 'A') {
-          bomA = parsed;
+          bomA = parsed; bomA._fileName = file.name;
           document.getElementById('uploadA').classList.add('loaded');
           document.getElementById('infoA').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
           showFieldMap('fieldsA', parsed);
         } else {
-          bomB = parsed;
+          bomB = parsed; bomB._fileName = file.name;
           document.getElementById('uploadB').classList.add('loaded');
           document.getElementById('infoB').textContent = '✅ ' + file.name + '（' + parsed.rows.length + ' 条物料）';
           showFieldMap('fieldsB', parsed);
@@ -208,41 +217,28 @@
     function showFieldMap(elId, parsed) {
       var el = document.getElementById(elId);
       var html = '<div><b>识别到的字段映射：</b></div>';
-      for (var std in parsed.fieldMap) {
-        html += '<div>' + std + ' ← ' + parsed.fieldMap[std] + '</div>';
-      }
-      el.innerHTML = html;
-      el.style.display = 'block';
+      for (var std in parsed.fieldMap) { html += '<div>' + std + ' ← ' + parsed.fieldMap[std] + '</div>'; }
+      el.innerHTML = html; el.style.display = 'block';
     }
 
-    // 解析BOM，自动识别格式
     function parseBOM(wb) {
       var sheetName = wb.SheetNames.find(function(n) { return n.includes('BOM') || n.includes('bom'); }) || wb.SheetNames[0];
       var ws = wb.Sheets[sheetName];
       var raw = XLSX.utils.sheet_to_json(ws, { header: 1 });
-
-      // 自动检测表头行
       var headerIdx = -1;
       for (var i = 0; i < Math.min(raw.length, 20); i++) {
         var row = (raw[i] || []).map(function(c) { return String(c || ''); });
-        // 检查是否包含已知字段名
         var matchCount = 0;
         for (var std in FIELD_ALIASES) {
           var aliases = FIELD_ALIASES[std];
           for (var a = 0; a < aliases.length; a++) {
-            if (row.some(function(c) { return c.includes(aliases[a]); })) {
-              matchCount++;
-              break;
-            }
+            if (row.some(function(c) { return c.includes(aliases[a]); })) { matchCount++; break; }
           }
         }
         if (matchCount >= 2) { headerIdx = i; break; }
       }
       if (headerIdx === -1) headerIdx = 0;
-
       var headers = raw[headerIdx].map(function(h) { return String(h || '').trim(); });
-
-      // 建立字段映射
       var fieldMap = {};
       for (var std in FIELD_ALIASES) {
         var aliases = FIELD_ALIASES[std];
@@ -251,115 +247,70 @@
           if (found) { fieldMap[std] = found; break; }
         }
       }
-
-      // 解析数据行，统一字段名
       var rows = [];
       for (var i = headerIdx + 1; i < raw.length; i++) {
         var r = raw[i];
         if (!r || r.length === 0) continue;
-
-        var obj = {};
-        var hasData = false;
+        var obj = {}, hasData = false;
         headers.forEach(function(h, idx) {
           var val = (r[idx] !== undefined && r[idx] !== null) ? String(r[idx]).trim() : '';
           if (h) obj[h] = val;
           if (val) hasData = true;
         });
         if (!hasData) continue;
-
-        // 统一字段名
         var unified = {};
-        for (var std in fieldMap) {
-          unified[std] = obj[fieldMap[std]] || '';
-        }
-
-        // 自动计算数量（从位号数逗号）
+        for (var std in fieldMap) { unified[std] = obj[fieldMap[std]] || ''; }
         if (!unified['数量'] && unified['位号']) {
           unified['数量'] = String(unified['位号'].split(',').length);
         }
-
-        if (unified['型号'] || unified['位号']) {
-          rows.push(unified);
-        }
+        if (unified['型号'] || unified['位号']) rows.push(unified);
       }
-
       return { headers: headers, rows: rows, sheetName: sheetName, fieldMap: fieldMap };
     }
 
-    // 对比逻辑
     function doCompare() {
       if (!bomA || !bomB) return;
-
       var keyField = document.getElementById('keySelect').value;
-
-      // 获取勾选的对比字段
       var cmpFields = [];
-      document.querySelectorAll('.cmp-field:checked').forEach(function(cb) {
-        cmpFields.push(cb.value);
-      });
-
-      var mapA = new Map();
-      var mapB = new Map();
-
-      bomA.rows.forEach(function(r) {
-        var key = (r[keyField] || '').trim();
-        if (key) mapA.set(key, r);
-      });
-      bomB.rows.forEach(function(r) {
-        var key = (r[keyField] || '').trim();
-        if (key) mapB.set(key, r);
-      });
-
+      document.querySelectorAll('.cmp-field:checked').forEach(function(cb) { cmpFields.push(cb.value); });
+      var mapA = new Map(), mapB = new Map();
+      bomA.rows.forEach(function(r) { var key = (r[keyField] || '').trim(); if (key) mapA.set(key, r); });
+      bomB.rows.forEach(function(r) { var key = (r[keyField] || '').trim(); if (key) mapB.set(key, r); });
       var results = [];
-
       mapA.forEach(function(rowA, key) {
         if (mapB.has(key)) {
-          var rowB = mapB.get(key);
-          var diffs = {};
-          var hasDiff = false;
-
+          var rowB = mapB.get(key), diffs = {}, hasDiff = false;
           cmpFields.forEach(function(f) {
-            var valA = (rowA[f] || '').trim();
-            var valB = (rowB[f] || '').trim();
-            if (valA !== valB) {
-              diffs[f] = { old: valA, new: valB };
-              hasDiff = true;
-            }
+            var valA = (rowA[f] || '').trim(), valB = (rowB[f] || '').trim();
+            if (valA !== valB) { diffs[f] = { old: valA, new: valB }; hasDiff = true; }
           });
-
           results.push({ status: hasDiff ? 'modified' : 'same', key: key, rowA: rowA, rowB: rowB, diffs: diffs });
         } else {
           results.push({ status: 'removed', key: key, rowA: rowA, rowB: null, diffs: {} });
         }
       });
-
       mapB.forEach(function(rowB, key) {
-        if (!mapA.has(key)) {
-          results.push({ status: 'added', key: key, rowA: null, rowB: rowB, diffs: {} });
-        }
+        if (!mapA.has(key)) results.push({ status: 'added', key: key, rowA: null, rowB: rowB, diffs: {} });
       });
-
       var order = { modified: 0, added: 1, removed: 2, same: 3 };
       results.sort(function(a, b) { return order[a.status] - order[b.status]; });
-
       compareResult = { results: results, cmpFields: cmpFields, keyField: keyField };
+      currentFilter = 'all'; currentDiffFilter = 'all';
       renderResult();
+      renderDiffDetail();
+      document.getElementById('formatABtn').style.display = 'inline-block';
+      document.getElementById('formatBBtn').style.display = 'inline-block';
     }
 
     function renderResult() {
-      var results = compareResult.results;
-      var cmpFields = compareResult.cmpFields;
-      var keyField = compareResult.keyField;
-
+      var results = compareResult.results, cmpFields = compareResult.cmpFields, keyField = compareResult.keyField;
       var counts = { added: 0, removed: 0, modified: 0, same: 0 };
       results.forEach(function(r) { counts[r.status]++; });
-
       document.getElementById('statsCards').innerHTML =
         '<div class="stat-card modified"><div class="stat-number">' + counts.modified + '</div><div class="stat-label">🟡 有差异</div></div>' +
         '<div class="stat-card added"><div class="stat-number">' + counts.added + '</div><div class="stat-label">🟢 B独有</div></div>' +
         '<div class="stat-card removed"><div class="stat-number">' + counts.removed + '</div><div class="stat-label">🔴 A独有</div></div>' +
         '<div class="stat-card same"><div class="stat-number">' + counts.same + '</div><div class="stat-label">⚪ 一致</div></div>';
-
       var filterHtml =
         '<div class="filter-btn ' + (currentFilter === 'all' ? 'active' : '') + '" onclick="setFilter(\'all\')">全部 (' + results.length + ')</div>' +
         '<div class="filter-btn ' + (currentFilter === 'modified' ? 'active' : '') + '" onclick="setFilter(\'modified\')">🟡 有差异 (' + counts.modified + ')</div>' +
@@ -367,31 +318,25 @@
         '<div class="filter-btn ' + (currentFilter === 'removed' ? 'active' : '') + '" onclick="setFilter(\'removed\')">🔴 A独有 (' + counts.removed + ')</div>' +
         '<div class="filter-btn ' + (currentFilter === 'same' ? 'active' : '') + '" onclick="setFilter(\'same\')">⚪ 一致 (' + counts.same + ')</div>';
       document.getElementById('filterBar').innerHTML = filterHtml;
-
       var filtered = currentFilter === 'all' ? results : results.filter(function(r) { return r.status === currentFilter; });
       var displayFields = [keyField];
       cmpFields.forEach(function(f) { if (f !== keyField) displayFields.push(f); });
-
       var thead = '<tr><th>状态</th>';
       displayFields.forEach(function(f) { thead += '<th>' + f + '(A)</th><th>' + f + '(B)</th>'; });
       thead += '</tr>';
-
       var tbody = '';
       filtered.forEach(function(item) {
         tbody += '<tr class="row-' + item.status + '">';
         var statusMap = { added: '<span class="status-badge badge-added">B独有</span>', removed: '<span class="status-badge badge-removed">A独有</span>', modified: '<span class="status-badge badge-modified">有差异</span>', same: '<span class="status-badge badge-same">一致</span>' };
         tbody += '<td>' + statusMap[item.status] + '</td>';
-
         displayFields.forEach(function(f) {
           var valA = item.rowA ? (item.rowA[f] || '') : '';
           var valB = item.rowB ? (item.rowB[f] || '') : '';
           var changed = item.diffs[f] ? ' class="cell-changed"' : '';
-          tbody += '<td' + changed + '>' + valA + '</td>';
-          tbody += '<td' + changed + '>' + valB + '</td>';
+          tbody += '<td' + changed + '>' + valA + '</td><td' + changed + '>' + valB + '</td>';
         });
         tbody += '</tr>';
       });
-
       document.querySelector('#resultTable thead').innerHTML = thead;
       document.querySelector('#resultTable tbody').innerHTML = tbody;
       document.getElementById('resultSection').classList.add('show');
@@ -399,19 +344,68 @@
       document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function setFilter(filter) { currentFilter = filter; renderResult(); }
+    function renderDiffDetail() {
+      if (!compareResult) return;
+      var results = compareResult.results, keyField = compareResult.keyField;
+      var diffItems = [];
+      results.forEach(function(item) {
+        if (item.status === 'modified') {
+          for (var f in item.diffs) {
+            diffItems.push({ type: 'change', key: item.key, field: f, valA: item.diffs[f].old, valB: item.diffs[f].new });
+          }
+        } else if (item.status === 'removed') {
+          diffItems.push({ type: 'a-only', key: item.key });
+        } else if (item.status === 'added') {
+          diffItems.push({ type: 'b-only', key: item.key });
+        }
+      });
+      var counts = { change: 0, 'a-only': 0, 'b-only': 0 };
+      diffItems.forEach(function(d) { counts[d.type]++; });
+      var total = diffItems.length;
+      var filterHtml =
+        '<div class="filter-btn ' + (currentDiffFilter === 'all' ? 'active' : '') + '" onclick="setDiffFilter(\'all\')">全部 (' + total + ')</div>' +
+        '<div class="filter-btn ' + (currentDiffFilter === 'change' ? 'active' : '') + '" onclick="setDiffFilter(\'change\')">🟡 字段变更 (' + counts.change + ')</div>' +
+        '<div class="filter-btn ' + (currentDiffFilter === 'a-only' ? 'active' : '') + '" onclick="setDiffFilter(\'a-only\')">🔴 A独有 (' + counts['a-only'] + ')</div>' +
+        '<div class="filter-btn ' + (currentDiffFilter === 'b-only' ? 'active' : '') + '" onclick="setDiffFilter(\'b-only\')">🟢 B独有 (' + counts['b-only'] + ')</div>';
+      document.getElementById('diffFilterBar').innerHTML = filterHtml;
+      var filtered = currentDiffFilter === 'all' ? diffItems : diffItems.filter(function(d) { return d.type === currentDiffFilter; });
+      var html = '';
+      if (filtered.length === 0) {
+        html = '<div style="text-align:center;color:#999;padding:30px;">🎉 没有差异项</div>';
+      } else {
+        filtered.forEach(function(d) {
+          if (d.type === 'change') {
+            html += '<div class="diff-item diff-field-change">' +
+              '<span class="diff-key">' + esc(d.key) + '</span>' +
+              '<span class="diff-type diff-type-change">' + d.field + '不同</span>' +
+              '<div class="diff-detail">A: <span class="val-a">' + esc(d.valA || '(空)') + '</span> → B: <span class="val-b">' + esc(d.valB || '(空)') + '</span></div></div>';
+          } else if (d.type === 'a-only') {
+            html += '<div class="diff-item diff-a-only">' +
+              '<span class="diff-key">' + esc(d.key) + '</span>' +
+              '<span class="diff-type diff-type-a-only">A独有</span>' +
+              '<div class="diff-detail">B中不存在此物料</div></div>';
+          } else {
+            html += '<div class="diff-item diff-b-only">' +
+              '<span class="diff-key">' + esc(d.key) + '</span>' +
+              '<span class="diff-type diff-type-b-only">B独有</span>' +
+              '<div class="diff-detail">A中不存在此物料</div></div>';
+          }
+        });
+      }
+      document.getElementById('diffDetailList').innerHTML = html;
+    }
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function setFilter(f) { currentFilter = f; renderResult(); }
+    function setDiffFilter(f) { currentDiffFilter = f; renderDiffDetail(); }
 
     function doExport() {
       if (!compareResult) return;
-      var results = compareResult.results;
-      var cmpFields = compareResult.cmpFields;
-      var keyField = compareResult.keyField;
+      var results = compareResult.results, cmpFields = compareResult.cmpFields, keyField = compareResult.keyField;
       var displayFields = [keyField];
       cmpFields.forEach(function(f) { if (f !== keyField) displayFields.push(f); });
-
       var statusMap = { added: 'B独有', removed: 'A独有', modified: '有差异', same: '一致' };
       var exportData = [];
-
       results.forEach(function(item) {
         var row = { '状态': statusMap[item.status] };
         displayFields.forEach(function(f) {
@@ -420,11 +414,46 @@
         });
         exportData.push(row);
       });
-
       var ws = XLSX.utils.json_to_sheet(exportData);
       var wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'BOM对比报告');
       XLSX.writeFile(wb, 'BOM对比报告.xlsx');
+    }
+
+    function doFormat(direction) {
+      if (!bomA || !bomB) return;
+      var templateBom, dataBom, templateLabel, dataLabel;
+      if (direction === 'AtoB') {
+        templateBom = bomA; dataBom = bomB; templateLabel = 'A'; dataLabel = 'B';
+      } else {
+        templateBom = bomB; dataBom = bomA; templateLabel = 'B'; dataLabel = 'A';
+      }
+      // Build reverse field map for template: originalHeader -> standardField
+      var templateReverseMap = {};
+      for (var std in templateBom.fieldMap) { templateReverseMap[templateBom.fieldMap[std]] = std; }
+      // Build data field map: standardField -> originalHeader
+      var dataFieldMap = dataBom.fieldMap;
+      // Use template's original headers in order
+      var outHeaders = templateBom.headers.filter(function(h) { return h; });
+      var outRows = [];
+      dataBom.rows.forEach(function(unifiedRow) {
+        var row = [];
+        outHeaders.forEach(function(origHeader) {
+          var stdField = templateReverseMap[origHeader];
+          if (stdField && unifiedRow[stdField] !== undefined) {
+            row.push(unifiedRow[stdField]);
+          } else {
+            row.push('');
+          }
+        });
+        outRows.push(row);
+      });
+      var sheetData = [outHeaders].concat(outRows);
+      var ws = XLSX.utils.aoa_to_sheet(sheetData);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'BOM整理');
+      var fileName = dataLabel + '整理后_按' + templateLabel + '格式.xlsx';
+      XLSX.writeFile(wb, fileName);
     }
   </script>
 </body>
