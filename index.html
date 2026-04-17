@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOM对比工具 v3.0</title>
+<title>BOM对比工具 v3.1</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -208,14 +208,25 @@ bindUpload('btnB','boxB','msgB','fmB','B');
 function parse(wb){
   var sn=wb.SheetNames.find(function(n){return n.includes('BOM')||n.includes('bom')})||wb.SheetNames[0];
   var raw=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
-  // 找表头
+  // 找表头：要求精确匹配至少3个已知字段名
   var hi=-1;
   for(var i=0;i<Math.min(raw.length,30);i++){
     if(!raw[i])continue;
-    var r=raw[i].map(function(c){return String(c||'')});
+    var r=raw[i].map(function(c){return String(c||'').trim()});
+    // 精确匹配：单元格内容完全等于别名
     var mc=0;
-    for(var s in ALIAS){for(var a=0;a<ALIAS[s].length;a++){if(r.some(function(c){return c===ALIAS[s][a]||c.indexOf(ALIAS[s][a])>=0})){mc++;break}}}
-    if(mc>=2){hi=i;break}
+    for(var s in ALIAS){for(var a=0;a<ALIAS[s].length;a++){if(r.some(function(c){return c===ALIAS[s][a]})){mc++;break}}}
+    if(mc>=3){hi=i;break}
+  }
+  // 如果精确匹配找不到，降级到包含匹配但要求>=3
+  if(hi<0){
+    for(var i=0;i<Math.min(raw.length,30);i++){
+      if(!raw[i])continue;
+      var r=raw[i].map(function(c){return String(c||'').trim()});
+      var mc=0;
+      for(var s in ALIAS){for(var a=0;a<ALIAS[s].length;a++){if(r.some(function(c){return c===ALIAS[s][a]||c.indexOf(ALIAS[s][a])>=0})){mc++;break}}}
+      if(mc>=4){hi=i;break}
+    }
   }
   if(hi<0){for(var i=0;i<raw.length;i++){if(raw[i]&&raw[i].length>1&&raw[i].some(function(c){return c!==null&&c!==undefined&&String(c).trim()!==''})){hi=i;break}}}
   if(hi<0)hi=0;
