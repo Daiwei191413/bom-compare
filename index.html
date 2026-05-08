@@ -68,7 +68,7 @@ tr:hover td{background:#f8fafc}
 <body>
 <div class="container">
 <h1>BOM 对比工具</h1>
-<p class="subtitle">v5.0 · 纯前端处理 · 支持公司标准BOM与立创EDA导出BOM对比</p>
+<p class="subtitle">v5.1 · 纯前端处理 · 支持公司标准BOM与立创EDA导出BOM对比</p>
 
 <div class="upload-area">
 <div class="upload-card" id="cardA">
@@ -99,18 +99,14 @@ tr:hover td{background:#f8fafc}
 </div>
 
 <div id="resultArea" class="hidden">
-<div class="stats">
-<div class="stat-card stat-mod"><div class="num" id="numMod">0</div><div class="label">有差异</div></div>
-<div class="stat-card stat-del"><div class="num" id="numDel">0</div><div class="label">A独有</div></div>
-<div class="stat-card stat-add"><div class="num" id="numAdd">0</div><div class="label">B独有</div></div>
-<div class="stat-card stat-same"><div class="num" id="numSame">0</div><div class="label">一致</div></div>
+<div class="stats" style="grid-template-columns:1fr 1fr">
+<div class="stat-card stat-mod"><div class="num" id="numDiff">0</div><div class="label">🔴 有差异（变更+独有）</div></div>
+<div class="stat-card stat-same"><div class="num" id="numSame">0</div><div class="label">🟢 一致</div></div>
 </div>
 
 <div class="toolbar">
 <button class="active" onclick="filterTable('all',this)">全部</button>
-<button onclick="filterTable('mod',this)">差异</button>
-<button onclick="filterTable('del',this)">A独有</button>
-<button onclick="filterTable('add',this)">B独有</button>
+<button onclick="filterTable('diff',this)">有差异</button>
 <button onclick="filterTable('same',this)">一致</button>
 <button class="export-btn" onclick="exportReport()">导出Excel报告</button>
 <button class="format-btn" onclick="formatAs('A')">按A格式整理B</button>
@@ -263,13 +259,9 @@ renderResults(results,dims);
 
 function renderResults(results,dims){
 document.getElementById('resultArea').classList.remove('hidden');
-const mod=results.filter(r=>r.status==='mod').length;
-const del=results.filter(r=>r.status==='del').length;
-const add=results.filter(r=>r.status==='add').length;
+const diffCount=results.filter(r=>r.status!=='same').length;
 const same=results.filter(r=>r.status==='same').length;
-document.getElementById('numMod').textContent=mod;
-document.getElementById('numDel').textContent=del;
-document.getElementById('numAdd').textContent=add;
+document.getElementById('numDiff').textContent=diffCount;
 document.getElementById('numSame').textContent=same;
 
 if(!dims)dims=[...document.querySelectorAll('.dim-chk:checked')].map(c=>c.value);
@@ -294,17 +286,35 @@ tbHtml+='</tr>';
 }
 table.querySelector('tbody').innerHTML=tbHtml;
 
-// 差异明细
+// 差异明细（细分：字段变更 / A独有 / B独有）
 const detailList=document.getElementById('detailList');
-const modItems=results.filter(r=>r.status==='mod');
-if(!modItems.length){detailList.innerHTML='<p style="color:#64748b">无差异项</p>';return}
+const diffItems=results.filter(r=>r.status!=='same');
+if(!diffItems.length){detailList.innerHTML='<p style="color:#64748b">🎉 完全一致，无差异</p>';return}
 let dHtml='';
+const modItems=diffItems.filter(r=>r.status==='mod');
+const delItems=diffItems.filter(r=>r.status==='del');
+const addItems=diffItems.filter(r=>r.status==='add');
+if(modItems.length){
+dHtml+=`<h4 style="margin:12px 0 8px;color:#f59e0b">🟡 字段变更（${modItems.length}项）</h4>`;
 for(const r of modItems){
 dHtml+=`<div class="detail-item"><div class="title">${r.key}</div>`;
 for(const d of r.diffs){
 dHtml+=`<div class="diff-line">${d.field}：<span class="val-a">${d.va||'(空)'}</span> → <span class="val-b">${d.vb||'(空)'}</span></div>`;
 }
 dHtml+='</div>';
+}
+}
+if(delItems.length){
+dHtml+=`<h4 style="margin:12px 0 8px;color:#ef4444">🔴 A独有（${delItems.length}项）— B中不存在</h4>`;
+for(const r of delItems){
+dHtml+=`<div class="detail-item" style="border-left-color:#ef4444"><div class="title">${r.key}</div><div class="diff-line">A有此物料，B中未找到匹配</div></div>`;
+}
+}
+if(addItems.length){
+dHtml+=`<h4 style="margin:12px 0 8px;color:#22c55e">🟢 B独有（${addItems.length}项）— A中不存在</h4>`;
+for(const r of addItems){
+dHtml+=`<div class="detail-item" style="border-left-color:#22c55e"><div class="title">${r.key}</div><div class="diff-line">B有此物料，A中未找到匹配</div></div>`;
+}
 }
 detailList.innerHTML=dHtml;
 }
@@ -313,7 +323,9 @@ function filterTable(status,btn){
 document.querySelectorAll('.toolbar button:not(.export-btn):not(.format-btn)').forEach(b=>b.classList.remove('active'));
 btn.classList.add('active');
 document.querySelectorAll('#resultTable tbody tr').forEach(tr=>{
-tr.style.display=(status==='all'||tr.dataset.status===status)?'':'none';
+if(status==='all')tr.style.display='';
+else if(status==='diff')tr.style.display=(tr.dataset.status!=='same')?'':'none';
+else tr.style.display=(tr.dataset.status===status)?'':'none';
 });
 }
 
